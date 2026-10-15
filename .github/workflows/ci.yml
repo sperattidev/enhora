@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, tipos, tests y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  migrations:
+    name: Migraciones contra PostGIS
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5-alpine
+        env:
+          POSTGRES_USER: enhora
+          POSTGRES_PASSWORD: enhora
+          POSTGRES_DB: enhora
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U enhora -d enhora"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://enhora:enhora@localhost:5432/enhora
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @enhora/shared build
+      - name: Aplicar migraciones
+        run: pnpm --filter @enhora/api db:migrate
+      - name: El esquema coincide con las migraciones
+        run: |
+          pnpm --filter @enhora/api db:generate --name drift-check
+          if [ -n "$(git status --porcelain apps/api/drizzle)" ]; then
+            echo "::error::El esquema cambió sin migración. Corré 'pnpm --filter @enhora/api db:generate'."
+            git status --porcelain apps/api/drizzle
+            exit 1
+          fi

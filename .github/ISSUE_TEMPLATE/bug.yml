@@ -1,0 +1,28 @@
+name: Error
+description: Algo no funciona como debería
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué pasó
+      description: Qué esperabas y qué ocurrió.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Entrar como comercio
+        2. Crear envío con dos entregas
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Dónde
+      options: [App comercio, App cadete, Panel admin, Seguimiento público, API]
+    validations:
+      required: true

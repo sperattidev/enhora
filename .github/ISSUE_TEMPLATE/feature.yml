@@ -1,0 +1,22 @@
+name: Funcionalidad
+description: Proponer algo nuevo
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Qué necesidad de un comercio, cadete o cliente resuelve.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      placeholder: '- Un comercio puede ...'

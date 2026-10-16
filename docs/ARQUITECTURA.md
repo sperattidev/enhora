@@ -117,7 +117,7 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 
 1. ✅ **Fundaciones:** monorepo, CI, dominio, esqueleto de API, base de datos.
 2. ✅ **Identidad:** registro, login, sesiones rotativas, roles, aprobación de comercios y cadetes. Falta: carga de documentos KYC a R2 y 2FA de admin.
-3. **Envíos:** crear, cotizar, máquina de estados, eventos.
+3. ✅ **Envíos:** zonas y tarifas por ciudad, cotización, creación idempotente, cancelación y relanzamiento con auditoría, seguimiento público. Falta: avance de paradas por el cadete (llega con la asignación).
 4. **Asignación:** ofertas en tiempo real con BullMQ + WebSocket.
 5. **Apps:** PWA comercio, PWA cadete, seguimiento público.
 6. **Dinero:** abonos Mercado Pago, liquidación semanal de cadetes, rendición de efectivo.

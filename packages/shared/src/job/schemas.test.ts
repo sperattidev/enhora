@@ -49,6 +49,13 @@ describe('createJobInputSchema', () => {
     );
   });
 
+  it('rejects a schedule more than 14 days ahead', () => {
+    const later = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString();
+    expect(issues({ stops: [pickup, dropoff], scheduledFor: later })).toContain(
+      'Se puede programar hasta 14 días antes',
+    );
+  });
+
   it('validates Argentine phones', () => {
     expect(issues({ stops: [pickup, { ...dropoff, contactPhone: '+5493465123456' }] })).toEqual([]);
     expect(issues({ stops: [pickup, { ...dropoff, contactPhone: '3465123456' }] }).length).toBeGreaterThan(0);

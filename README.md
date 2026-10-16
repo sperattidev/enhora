@@ -46,6 +46,20 @@ ADMIN_EMAIL=vos@enhora.net.ar ADMIN_PASSWORD='una-clave-larga' pnpm --filter @en
 | GET       | `/auth/me`                                                         | token   | Cuenta, comercio o cadete asociado y su estado                    |
 | GET/PATCH | `/admin/couriers…`, `/admin/merchants…`, `/admin/users/:id/status` | admin   | Aprobar, rechazar o suspender                                     |
 
+## API de envíos
+
+| Método         | Ruta                                        | Acceso          | Qué hace                                                                                                 |
+| -------------- | ------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------- |
+| POST           | `/jobs/quote`                               | comercio        | Cotiza sin guardar; `422` con `stopIndexes` si alguna dirección está fuera de cobertura                  |
+| POST           | `/jobs`                                     | comercio activo | Crea el envío. Header opcional `Idempotency-Key`: repetir la misma clave devuelve el mismo envío (`200`) |
+| GET            | `/jobs?status=&before=&limit=`              | comercio        | Lista paginada, más nuevos primero                                                                       |
+| GET            | `/jobs/:id`                                 | comercio        | Detalle con paradas, códigos de entrega y auditoría                                                      |
+| POST           | `/jobs/:id/cancel`                          | comercio        | Cancela con motivo, solo antes del retiro                                                                |
+| POST           | `/jobs/:id/relaunch`                        | comercio activo | Vuelve a buscar cadete si nadie aceptó                                                                   |
+| GET            | `/t/:token`                                 | público         | Seguimiento para el cliente: estado, comercio y nombre del cadete; vence 24 h después del cierre         |
+| POST/PATCH/GET | `/admin/zones`, `/admin/cities/:slug/zones` | admin           | Zonas como polígonos GeoJSON; no se permiten superposiciones                                             |
+| GET/PUT        | `/admin/cities/:slug/pricing`               | admin           | Paradas extra, trámites, recargo, redondeo y espera                                                      |
+
 ## Contribuir
 
 Ver [CONTRIBUTING.md](CONTRIBUTING.md): ramas, commits y pull requests.

@@ -97,7 +97,7 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 - **Prueba de entrega:** código de 4 dígitos que el cliente le dicta al cadete y/o foto.
 - **Seguimiento público:** URL con token aleatorio no adivinable, expira 24 h después de la entrega; nunca expone teléfono ni datos del cadete más allá del nombre.
 - **Efectivo:** límite de efectivo en mano por cadete; si lo supera, no recibe ofertas con cobro hasta rendir.
-- **Auditoría:** cada transición de estado se guarda en `job_events` (quién, cuándo, desde dónde).
+- **Auditoría:** cada transición de estado se guarda en `job_events`, y cada cambio de un administrador (aprobaciones, suspensiones, zonas, tarifas) en `admin_audit` con quién, cuándo y desde qué IP. Ninguna de las dos tablas se modifica ni se borra desde la aplicación.
 - **Datos personales:** Ley 25.326 — mínimos datos necesarios, retención acotada, borrado a pedido.
 - **Infra:** secretos solo por variables de entorno, nunca en el repo; base no expuesta a internet; backups cifrados diarios a R2.
 
@@ -119,7 +119,7 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 2. ✅ **Identidad:** registro, login, sesiones rotativas, roles, aprobación de comercios y cadetes. Falta: carga de documentos KYC a R2 y 2FA de admin.
 3. ✅ **Envíos:** zonas y tarifas por ciudad, cotización, creación idempotente, cancelación y relanzamiento con auditoría, seguimiento público. Falta: avance de paradas por el cadete (llega con la asignación).
 4. ✅ **Asignación:** despachador con ofertas secuenciales, vencimientos, programados, liberación y cierre con código. Falta: aviso en tiempo real por WebSocket (hoy la app del cadete consulta cada pocos segundos).
-5. 🟡 **Apps:** ✅ app web del comercio (PWA), ✅ app del cadete (PWA) y seguimiento público. Falta: panel de administración y empaquetar la app del cadete con Capacitor para GPS en segundo plano.
+5. ✅ **Apps:** app web del comercio, app del cadete, seguimiento público y panel de administración (operaciones, aprobaciones, zonas dibujadas en el mapa, tarifas y auditoría). Falta: empaquetar la app del cadete con Capacitor para GPS en segundo plano.
 6. **Dinero:** abonos Mercado Pago, liquidación semanal de cadetes, rendición de efectivo.
 7. **Producción:** despliegue en VPS, backups, monitoreo.
 8. **Piloto** con 5–10 comercios de Firmat.

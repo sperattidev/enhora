@@ -20,7 +20,7 @@ export const phoneSchema = z.string().regex(/^\+54\d{10,11}$/, 'Teléfono invál
 export const stopInputSchema = z
   .object({
     kind: z.enum(STOP_KINDS),
-    address: z.string().trim().min(3).max(200),
+    address: z.string().trim().min(3, 'Ingresá la dirección').max(200),
     location: pointSchema,
     contactName: z.string().trim().min(1).max(80).optional(),
     contactPhone: phoneSchema.optional(),

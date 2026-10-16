@@ -34,7 +34,13 @@ export interface AccountView {
   id: string;
   email: string;
   role: Role;
-  merchant: { id: string; displayName: string; status: string } | null;
+  merchant: {
+    id: string;
+    displayName: string;
+    status: string;
+    address: string;
+    location: { lng: number; lat: number };
+  } | null;
   courier: { id: string; fullName: string; kycStatus: string } | null;
 }
 
@@ -101,7 +107,13 @@ export class DrizzleAuthRepository extends AuthRepository {
     const user = await this.findUserById(userId);
     if (!user) return null;
     const [merchant] = await this.db
-      .select({ id: merchants.id, displayName: merchants.displayName, status: merchants.status })
+      .select({
+        id: merchants.id,
+        displayName: merchants.displayName,
+        status: merchants.status,
+        address: merchants.address,
+        location: merchants.location,
+      })
       .from(merchantMembers)
       .innerJoin(merchants, eq(merchants.id, merchantMembers.merchantId))
       .where(eq(merchantMembers.userId, userId))

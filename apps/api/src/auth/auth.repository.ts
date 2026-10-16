@@ -1,6 +1,7 @@
 import type { RegisterCourierInput, RegisterMerchantInput, Role } from '@enhora/shared';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { isUniqueViolation } from '../common/db-errors.js';
 import { DB, type Database } from '../db/db.module.js';
 import { cities, couriers, merchantMembers, merchants, sessions, users } from '../db/schema.js';
 
@@ -59,14 +60,6 @@ export abstract class AuthRepository {
   abstract consumeSession(tokenHash: string, now: Date): Promise<SessionRecord | null>;
   abstract findSession(tokenHash: string): Promise<SessionRecord | null>;
   abstract revokeFamily(familyId: string, now: Date): Promise<void>;
-}
-
-const UNIQUE_VIOLATION = '23505';
-
-function isUniqueViolation(error: unknown): boolean {
-  // drizzle wraps driver errors, so the Postgres code may sit on the error or on its cause.
-  const e = error as { code?: string; cause?: { code?: string } } | undefined;
-  return e?.code === UNIQUE_VIOLATION || e?.cause?.code === UNIQUE_VIOLATION;
 }
 
 const userColumns = {

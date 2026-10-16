@@ -41,7 +41,14 @@ export interface AccountView {
     address: string;
     location: { lng: number; lat: number };
   } | null;
-  courier: { id: string; fullName: string; kycStatus: string } | null;
+  courier: {
+    id: string;
+    fullName: string;
+    kycStatus: string;
+    vehicle: string;
+    online: boolean;
+    cashInHandCents: number;
+  } | null;
 }
 
 /** Raised when an email, CUIT or DNI is already registered. */
@@ -119,7 +126,14 @@ export class DrizzleAuthRepository extends AuthRepository {
       .where(eq(merchantMembers.userId, userId))
       .limit(1);
     const [courier] = await this.db
-      .select({ id: couriers.id, fullName: couriers.fullName, kycStatus: couriers.kycStatus })
+      .select({
+        id: couriers.id,
+        fullName: couriers.fullName,
+        kycStatus: couriers.kycStatus,
+        vehicle: couriers.vehicle,
+        online: couriers.online,
+        cashInHandCents: couriers.cashInHandCents,
+      })
       .from(couriers)
       .where(eq(couriers.userId, userId));
     return { id: user.id, email: user.email, role: user.role, merchant: merchant ?? null, courier: courier ?? null };

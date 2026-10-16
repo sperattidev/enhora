@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newDeliveryCode, newTrackingToken } from './codes.js';
+import { codesMatch, newDeliveryCode, newTrackingToken } from './codes.js';
 import { toTrackingView, type TrackingSource } from './views.js';
 
 const base: TrackingSource = {
@@ -45,6 +45,12 @@ describe('toTrackingView', () => {
 describe('codes', () => {
   it('delivery codes are always 4 digits', () => {
     for (let i = 0; i < 500; i++) expect(newDeliveryCode()).toMatch(/^\d{4}$/);
+  });
+
+  it('compares codes exactly', () => {
+    expect(codesMatch('0420', '0420')).toBe(true);
+    expect(codesMatch('0420', '420')).toBe(false);
+    expect(codesMatch('0420', '0421')).toBe(false);
   });
 
   it('tracking tokens are long and unique', () => {

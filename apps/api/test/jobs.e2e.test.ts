@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { merchants, merchantMembers } from '../src/db/schema.js';
-import { createTestContext, FIRMAT, merchantRegistration, type TestContext } from './helpers.js';
+import {
+  createTestContext,
+  FIRMAT,
+  merchantRegistration,
+  resetFirmatZones,
+  square,
+  type TestContext,
+} from './helpers.js';
 
 let ctx: TestContext;
 const run = randomUUID().slice(0, 8);
@@ -14,23 +21,6 @@ let admin: string;
 let active: string;
 let pending: string;
 let other: string;
-
-/** Square around a point, in degrees. */
-function square(center: { lat: number; lng: number }, half: number) {
-  const { lat, lng } = center;
-  return {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [lng - half, lat - half],
-        [lng + half, lat - half],
-        [lng + half, lat + half],
-        [lng - half, lat + half],
-        [lng - half, lat - half],
-      ],
-    ],
-  };
-}
 
 // Firmat centre: 0.01° box. Outskirts: a ring-shaped area is overkill here, so a separate box to the east.
 const CENTRO = square(FIRMAT, 0.01);
@@ -68,7 +58,7 @@ beforeAll(async () => {
   admin = (await ctx.login(adminEmail)).token;
 
   // The zones e2e may already have run against this database; start from a clean Firmat map.
-  await ctx.sql`update zones set active = false where city_id = (select id from cities where slug = 'firmat')`;
+  await resetFirmatZones(ctx);
   for (const [name, feeCents, area] of [
     ['Centro', 250_000, CENTRO],
     ['Este', 400_000, ESTE],

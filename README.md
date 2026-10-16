@@ -60,6 +60,20 @@ ADMIN_EMAIL=vos@enhora.net.ar ADMIN_PASSWORD='una-clave-larga' pnpm --filter @en
 | POST/PATCH/GET | `/admin/zones`, `/admin/cities/:slug/zones` | admin           | Zonas como polígonos GeoJSON; no se permiten superposiciones                                             |
 | GET/PUT        | `/admin/cities/:slug/pricing`               | admin           | Paradas extra, trámites, recargo, redondeo y espera                                                      |
 
+## API del cadete
+
+| Método | Ruta                                        | Qué hace                                                                       |
+| ------ | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| PUT    | `/courier/availability`                     | Conectarse o desconectarse (solo cadetes aprobados se conectan)                |
+| PUT    | `/courier/location`                         | Ubicación GPS, cada pocos segundos mientras está en línea                      |
+| GET    | `/courier/offer`                            | Oferta vigente: ganancia, paradas y efectivo a cobrar; `null` si no hay        |
+| POST   | `/courier/offers/:id/accept` · `/reject`    | Aceptar o rechazar                                                             |
+| GET    | `/courier/jobs`                             | Envíos activos, con contacto e instrucciones                                   |
+| POST   | `/courier/jobs/:id/stops/:position/advance` | `EN_ROUTE` → `ARRIVED` → `DONE` (con código en entregas) o `FAILED` con motivo |
+| POST   | `/courier/jobs/:id/release`                 | Devolver un envío antes de retirar; vuelve a buscarse sin este cadete          |
+
+La asignación automática está explicada en [docs/DOMINIO.md](docs/DOMINIO.md#asignación).
+
 ## Contribuir
 
 Ver [CONTRIBUTING.md](CONTRIBUTING.md): ramas, commits y pull requests.

@@ -2,6 +2,8 @@ import { type DynamicModule, Module } from '@nestjs/common';
 import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule } from './config/config.module.js';
+import { CouriersModule } from './couriers/couriers.module.js';
+import { DispatchModule } from './dispatch/dispatch.module.js';
 import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -13,7 +15,16 @@ export class AppModule {
   static forRoot(env: Env): DynamicModule {
     return {
       module: AppModule,
-      imports: [ConfigModule.forRoot(env), DbModule, AuthModule, AdminModule, ZonesModule, JobsModule],
+      imports: [
+        ConfigModule.forRoot(env),
+        DbModule,
+        AuthModule,
+        AdminModule,
+        ZonesModule,
+        JobsModule,
+        CouriersModule,
+        DispatchModule,
+      ],
       controllers: [HealthController],
     };
   }

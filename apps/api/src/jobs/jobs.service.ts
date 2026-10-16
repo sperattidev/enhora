@@ -69,6 +69,7 @@ export class JobsService {
             scheduledFor: input.scheduledFor ?? null,
             notes: input.notes ?? null,
             trackingToken: newTrackingToken(),
+            searchingSince: status === 'SEARCHING' ? new Date() : null,
             idempotencyKey: idempotencyKey ?? null,
           })
           .returning({ id: jobs.id });
@@ -177,7 +178,7 @@ export class JobsService {
       // A live offer must die with the job, or a courier could still accept it.
       await tx
         .update(offers)
-        .set({ status: 'EXPIRED', respondedAt: new Date() })
+        .set({ status: 'WITHDRAWN', respondedAt: new Date() })
         .where(and(eq(offers.jobId, jobId), eq(offers.status, 'PENDING')));
     });
     return this.detail(merchant.id, jobId);
@@ -186,7 +187,14 @@ export class JobsService {
   async relaunch(userId: string, jobId: string) {
     const merchant = await this.merchants.activeForUser(userId);
     await this.db.transaction((tx) =>
-      transitionJob(tx, { jobId, merchantId: merchant.id, to: 'SEARCHING', actor: 'MERCHANT', actorUserId: userId }),
+      transitionJob(tx, {
+        jobId,
+        merchantId: merchant.id,
+        to: 'SEARCHING',
+        actor: 'MERCHANT',
+        actorUserId: userId,
+        set: { searchingSince: new Date() },
+      }),
     );
     return this.detail(merchant.id, jobId);
   }

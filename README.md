@@ -12,6 +12,8 @@
 | ------------------------------------ | ----------------------------------------------------------------- |
 | [`apps/api`](apps/api)               | API REST + WebSocket (NestJS, Fastify, Drizzle, PostGIS)          |
 | [`apps/web`](apps/web)               | App web del comercio (PWA) y página pública de seguimiento        |
+| [`apps/rider`](apps/rider)           | App del cadete (PWA): conexión, ofertas y entregas paso a paso    |
+| [`packages/ui`](packages/ui)         | Cliente API, sesión, formatos y componentes de las apps           |
 | [`packages/shared`](packages/shared) | Dominio: esquemas, estados, precios y asignación                  |
 | [`infra`](infra)                     | Docker Compose y despliegue                                       |
 | [`docs`](docs)                       | [Arquitectura](docs/ARQUITECTURA.md) y [dominio](docs/DOMINIO.md) |

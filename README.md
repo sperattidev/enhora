@@ -11,6 +11,7 @@
 | Carpeta                              | Contenido                                                         |
 | ------------------------------------ | ----------------------------------------------------------------- |
 | [`apps/api`](apps/api)               | API REST + WebSocket (NestJS, Fastify, Drizzle, PostGIS)          |
+| [`apps/web`](apps/web)               | App web del comercio (PWA) y página pública de seguimiento        |
 | [`packages/shared`](packages/shared) | Dominio: esquemas, estados, precios y asignación                  |
 | [`infra`](infra)                     | Docker Compose y despliegue                                       |
 | [`docs`](docs)                       | [Arquitectura](docs/ARQUITECTURA.md) y [dominio](docs/DOMINIO.md) |

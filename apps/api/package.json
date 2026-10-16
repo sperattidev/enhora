@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "drizzle"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "nest start --watch",
@@ -13,7 +17,8 @@
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "admin:create": "node dist/scripts/create-admin.js"
+    "admin:create": "node dist/scripts/create-admin.js",
+    "migrate": "node dist/scripts/migrate.js"
   },
   "dependencies": {
     "@enhora/shared": "workspace:*",

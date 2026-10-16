@@ -15,7 +15,8 @@ const SQL_CLIENT = Symbol('SQL_CLIENT');
     {
       provide: SQL_CLIENT,
       inject: [ENV],
-      useFactory: (env: Env) => postgres(env.DATABASE_URL, { max: 10, idle_timeout: 30 }),
+      // PostGIS NOTICEs (e.g. self-intersection details) would otherwise go straight to stdout.
+      useFactory: (env: Env) => postgres(env.DATABASE_URL, { max: 10, idle_timeout: 30, onnotice: () => {} }),
     },
     {
       provide: DB,

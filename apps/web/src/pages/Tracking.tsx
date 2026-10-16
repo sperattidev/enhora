@@ -1,11 +1,17 @@
 import type { JobStatus } from '@enhora/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router';
-import { Brand } from '../components/Brand';
-import { Card, Spinner } from '../components/ui';
-import { api, ApiError } from '../lib/api';
-import { formatDateTime, STOP_KIND_LABEL, STOP_STATUS_LABEL } from '../lib/format';
-import type { TrackingView } from '../lib/types';
+import {
+  Brand,
+  Card,
+  Spinner,
+  api,
+  ApiError,
+  formatDateTime,
+  STOP_KIND_LABEL,
+  STOP_STATUS_LABEL,
+  type TrackingView,
+} from '@enhora/ui';
 
 const STEPS: { status: JobStatus[]; label: string }[] = [
   { status: ['SCHEDULED', 'SEARCHING', 'EXPIRED'], label: 'Pedido recibido' },

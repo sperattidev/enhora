@@ -1,10 +1,8 @@
 import { registerMerchantInputSchema } from '@enhora/shared';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
-import { MapPicker, type LatLng } from '../components/MapPicker';
-import { Alert, Button, Card, Field, Input } from '../components/ui';
-import { api, ApiError } from '../lib/api';
-import { normalizeArPhone } from '../lib/phone';
+import { MapPicker, type LatLng } from '@enhora/ui/map';
+import { Alert, Button, Card, Field, Input, api, ApiError, normalizeArPhone } from '@enhora/ui';
 
 type Errors = Partial<Record<string, string>>;
 

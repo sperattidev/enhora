@@ -118,7 +118,9 @@ describe('auth (e2e)', () => {
     expect(approve.statusCode).toBe(204);
 
     const me = await request({ method: 'GET', url: '/auth/me', token: courierSession.token });
-    expect(me.json()).toMatchObject({ courier: { kycStatus: 'APPROVED' } });
+    expect(me.json()).toMatchObject({
+      courier: { kycStatus: 'APPROVED', online: false, cashInHandCents: 0, vehicle: 'MOTORCYCLE' },
+    });
   });
 
   it('requires a token on protected routes', async () => {

@@ -16,7 +16,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/web/**/*.{ts,tsx}'],
+    files: ['apps/web/**/*.{ts,tsx}', 'apps/rider/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'],
     ...reactHooks.configs.flat['recommended-latest'],
   },
   {

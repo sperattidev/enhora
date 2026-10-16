@@ -1,3 +1,4 @@
+import { twMerge } from 'tailwind-merge';
 import {
   forwardRef,
   useId,
@@ -7,10 +8,11 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react';
-import type { Tone } from '../lib/format';
+import type { Tone } from './format';
 
+/** Joins class names; later classes win over conflicting earlier ones, so `className` can override defaults. */
 function cx(...classes: (string | false | null | undefined)[]): string {
-  return classes.filter(Boolean).join(' ');
+  return twMerge(classes.filter(Boolean).join(' '));
 }
 
 const BUTTON_VARIANTS = {
@@ -18,6 +20,8 @@ const BUTTON_VARIANTS = {
   secondary: 'bg-white text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50 disabled:text-slate-400',
   ghost: 'text-slate-700 hover:bg-slate-100',
   danger: 'bg-white text-red-700 ring-1 ring-red-200 hover:bg-red-50',
+  /** For dark surfaces such as the courier offer card. */
+  dark: 'bg-slate-800 text-white ring-1 ring-slate-700 hover:bg-slate-700',
 } as const;
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

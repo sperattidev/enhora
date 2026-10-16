@@ -1,7 +1,5 @@
 import { Link, Navigate, NavLink, Outlet } from 'react-router';
-import { useAuth } from '../lib/auth';
-import { Brand } from './Brand';
-import { Alert, Button, FullPageSpinner } from './ui';
+import { useAuth, Brand, Alert, Button, FullPageSpinner } from '@enhora/ui';
 
 /** Only merchants get past this; everyone else is sent to the login page. */
 export function RequireMerchant() {

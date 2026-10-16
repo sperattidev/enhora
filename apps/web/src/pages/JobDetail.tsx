@@ -2,10 +2,16 @@ import type { JobStatus } from '@enhora/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import { Alert, Badge, Button, Card, Field, Input, Spinner } from '../components/ui';
-import { api } from '../lib/api';
-import { useAccount } from '../lib/auth';
 import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Spinner,
+  api,
+  useAccount,
   ACTIVE_JOB_STATUSES,
   CANCELLABLE_JOB_STATUSES,
   formatDateTime,
@@ -14,9 +20,11 @@ import {
   JOB_STATUS_TONE,
   STOP_KIND_LABEL,
   STOP_STATUS_LABEL,
-} from '../lib/format';
-import { whatsappLink } from '../lib/phone';
-import type { JobDetail, JobEvent, JobStop } from '../lib/types';
+  whatsappLink,
+  type JobDetail,
+  type JobEvent,
+  type JobStop,
+} from '@enhora/ui';
 
 export function trackingUrl(token: string): string {
   return `${window.location.origin}/seguimiento/${token}`;

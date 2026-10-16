@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, Link, Navigate, RouterProvider, type RouteObject } from 'react-router';
 import { PublicOnly, RequireMerchant } from './components/Layout';
-import { AuthProvider } from './lib/auth';
+import { AuthProvider } from '@enhora/ui';
 import { LoginPage } from './pages/Login';
 import { TrackingPage } from './pages/Tracking';
 

@@ -11,7 +11,14 @@ export interface Account {
     address: string;
     location: { lat: number; lng: number };
   } | null;
-  courier: { id: string; fullName: string; kycStatus: string } | null;
+  courier: {
+    id: string;
+    fullName: string;
+    kycStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+    vehicle: string;
+    online: boolean;
+    cashInHandCents: number;
+  } | null;
 }
 
 export interface JobSummary {
@@ -77,4 +84,43 @@ export interface TrackingView {
   createdAt: string;
   finishedAt: string | null;
   stops: { kind: StopKind; status: StopStatus }[];
+}
+
+/** What a courier sees of an offer: enough to decide, nothing personal about the recipient. */
+export interface CourierOffer {
+  id: string;
+  expiresAt: string;
+  jobId: string;
+  earningsCents: number;
+  merchantName: string;
+  stops: {
+    kind: StopKind;
+    address: string;
+    location: { lat: number; lng: number };
+    cashToCollectCents: number | null;
+  }[];
+}
+
+export interface CourierJobStop {
+  position: number;
+  kind: StopKind;
+  status: StopStatus;
+  address: string;
+  location: { lat: number; lng: number };
+  contactName: string | null;
+  contactPhone: string | null;
+  instructions: string | null;
+  cashToCollectCents: number | null;
+  maxSpendCents: number | null;
+}
+
+export interface CourierJob {
+  id: string;
+  status: JobStatus;
+  earningsCents: number;
+  notes: string | null;
+  assignedAt: string | null;
+  merchantName: string;
+  merchantPhone: string;
+  stops: CourierJobStop[];
 }

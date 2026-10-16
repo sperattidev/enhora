@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import type { JobStop, TrackingView } from '../lib/types';
+import type { JobStop, TrackingView } from '@enhora/ui';
 import { deliveryMessage } from './JobDetail';
 import { TrackingPage } from './Tracking';
 

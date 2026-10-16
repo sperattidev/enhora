@@ -30,10 +30,8 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
         },
-        workbox: {
-          // Never cache API answers: offers expire in seconds.
-          navigateFallbackDenylist: API_PATHS.map((p) => new RegExp(`^${p}`)),
-        },
+        // Only the built app is precached. API answers are never cached: in production the API is
+        // another origin (api.enhora.net.ar) and envíos change every few seconds.
       }),
     ],
     server: {

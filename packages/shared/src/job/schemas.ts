@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import { JOB_STATUSES } from './status.js';
 import { STOP_KINDS } from './stop.js';
 
 export const MAX_STOPS = 10;
+const MAX_SCHEDULE_AHEAD_MS = 14 * 24 * 60 * 60 * 1000;
 
 /** Integer amount in cents. */
 export const centsSchema = z.number().int().nonnegative().max(1_000_000_000_00);
@@ -60,5 +62,27 @@ export const createJobInputSchema = z
     if (job.scheduledFor && job.scheduledFor.getTime() < Date.now()) {
       ctx.addIssue({ code: 'custom', path: ['scheduledFor'], message: 'La fecha programada ya pasó' });
     }
+    if (job.scheduledFor && job.scheduledFor.getTime() > Date.now() + MAX_SCHEDULE_AHEAD_MS) {
+      ctx.addIssue({ code: 'custom', path: ['scheduledFor'], message: 'Se puede programar hasta 14 días antes' });
+    }
   });
 export type CreateJobInput = z.infer<typeof createJobInputSchema>;
+
+export const cancelJobInputSchema = z.object({
+  reason: z.string().trim().min(3).max(300),
+});
+export type CancelJobInput = z.infer<typeof cancelJobInputSchema>;
+
+export const listJobsQuerySchema = z.object({
+  status: z.enum(JOB_STATUSES).optional(),
+  /** Cursor: return jobs created strictly before this instant. */
+  before: z.coerce.date().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;
+
+/** Optional `Idempotency-Key` header value. */
+export const idempotencyKeySchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-z0-9_-]{8,64}$/, 'Idempotency-Key inválida');

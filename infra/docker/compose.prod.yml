@@ -1,0 +1,114 @@
+# EnHora production stack. Lives in /opt/enhora on the VPS next to its .env (see .env.prod.example).
+# Nothing listens on the host: traffic arrives only through the Cloudflare tunnel.
+name: enhora
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt: ['no-new-privileges:true']
+  logging:
+    driver: json-file
+    options: { max-size: '10m', max-file: '5' }
+
+services:
+  postgres:
+    <<: *hardening
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      POSTGRES_USER: enhora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: enhora
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256mb
+    networks: [db]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U enhora -d enhora']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Runs pending migrations, then exits. The API only starts if this succeeds.
+  migrate:
+    image: ${API_IMAGE:?set API_IMAGE}:${IMAGE_TAG:-latest}
+    command: ['node', 'dist/scripts/migrate.js']
+    environment:
+      DATABASE_URL: postgres://enhora:${POSTGRES_PASSWORD}@postgres:5432/enhora
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [db]
+    restart: 'no'
+
+  api:
+    <<: *hardening
+    image: ${API_IMAGE}:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://enhora:${POSTGRES_PASSWORD}@postgres:5432/enhora
+      CORS_ORIGINS: https://${APP_HOST},https://${RIDER_HOST}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in .env}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [db, edge]
+    read_only: true
+    tmpfs: [/tmp]
+
+  web:
+    <<: *hardening
+    image: ${WEB_IMAGE:?set WEB_IMAGE}:${IMAGE_TAG:-latest}
+    environment:
+      APP_HOST: ${APP_HOST:?set APP_HOST}
+      RIDER_HOST: ${RIDER_HOST:?set RIDER_HOST}
+      API_HOST: ${API_HOST:?set API_HOST}
+      APEX_HOST: ${APEX_HOST:?set APEX_HOST}
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [edge]
+    volumes:
+      - caddy_data:/data
+
+  # Outbound-only connector: Cloudflare routes app/cadete/api hostnames to http://web:80.
+  cloudflared:
+    <<: *hardening
+    image: cloudflare/cloudflared:latest
+    command: ['tunnel', '--no-autoupdate', 'run']
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on: [web]
+    networks: [edge]
+
+  # Nightly compressed dump into ./backups, keeping the last 14 days.
+  backup:
+    <<: *hardening
+    image: postgis/postgis:17-3.5-alpine
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        while true; do
+          file=/backups/enhora-$$(date +%Y%m%d-%H%M).dump
+          if pg_dump -Fc -h postgres -U enhora enhora > "$$file.partial"; then
+            mv "$$file.partial" "$$file" && echo "backup ok: $$file"
+          else
+            rm -f "$$file.partial" && echo "backup FAILED" >&2
+          fi
+          find /backups -name 'enhora-*.dump' -mtime +14 -delete
+          sleep 86400
+        done
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [db]
+    volumes:
+      - ./backups:/backups
+
+networks:
+  # The database network has no route to the internet.
+  db:
+    internal: true
+  edge: {}
+
+volumes:
+  pgdata:
+  caddy_data:

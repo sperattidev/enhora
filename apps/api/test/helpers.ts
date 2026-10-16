@@ -41,6 +41,7 @@ export async function createTestContext(): Promise<TestContext> {
     NODE_ENV: 'test',
     JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET ?? 'e2e-secret-e2e-secret-e2e-secret-e2e',
     CORS_ORIGINS: ORIGIN,
+    DISPATCH_ENABLED: 'false',
   });
   const app = await createApp(env, { logger: false });
   await app.init();
@@ -121,5 +122,39 @@ export function merchantRegistration(email: string) {
     cuit: randomCuit(),
     address: 'Belgrano 1200',
     location: FIRMAT,
+  };
+}
+
+/** Square GeoJSON polygon around a point, in degrees. */
+export function square(center: { lat: number; lng: number }, half: number) {
+  const { lat, lng } = center;
+  return {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [lng - half, lat - half],
+        [lng + half, lat - half],
+        [lng + half, lat + half],
+        [lng - half, lat + half],
+        [lng - half, lat - half],
+      ],
+    ],
+  };
+}
+
+/** Disables every Firmat zone so a test file can draw its own map without overlaps. */
+export async function resetFirmatZones(ctx: TestContext): Promise<void> {
+  await ctx.sql`update zones set active = false where city_id = (select id from cities where slug = 'firmat')`;
+}
+
+export function courierRegistration(email: string, fullName: string) {
+  return {
+    email,
+    password: PASSWORD,
+    phone: '+5493465444444',
+    citySlug: 'firmat',
+    fullName,
+    dni: randomDni(),
+    vehicle: 'MOTORCYCLE',
   };
 }

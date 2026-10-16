@@ -43,6 +43,13 @@
       "when": 1792110560589,
       "tag": "0005_seed_firmat_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792111633012,
+      "tag": "0006_dispatch",
+      "breakpoints": true
     }
   ]
 }

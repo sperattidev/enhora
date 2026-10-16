@@ -37,7 +37,8 @@ export const stopKind = pgEnum('stop_kind', STOP_KINDS);
 export const stopStatus = pgEnum('stop_status', STOP_STATUSES);
 export const stopFailureReason = pgEnum('stop_failure_reason', STOP_FAILURE_REASONS);
 export const actor = pgEnum('actor', ACTORS);
-export const offerStatus = pgEnum('offer_status', ['PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED']);
+/** WITHDRAWN: the job was cancelled while the offer was live; it never counts against the courier. */
+export const offerStatus = pgEnum('offer_status', ['PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'WITHDRAWN']);
 
 export const cities = pgTable('cities', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -208,6 +209,9 @@ export const jobs = pgTable(
     /** Client-supplied key so a double tap or a retried request never creates two jobs. */
     idempotencyKey: text('idempotency_key'),
     cancelReason: text('cancel_reason'),
+    /** When the current search for a courier started; drives the search timeout. */
+    searchingSince: timestamp('searching_since', { withTimezone: true }),
+    assignedAt: timestamp('assigned_at', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     createdAt: createdAt(),

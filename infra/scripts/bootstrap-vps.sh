@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time preparation of an Ubuntu 22.04/24.04 VPS for EnHora. Run as root:
-#   curl -fsSL https://raw.githubusercontent.com/sperattidev/enhora/main/infra/scripts/bootstrap-vps.sh -o bootstrap.sh
+#   curl -fsSL https://raw.githubusercontent.com/sperattidev/enhora/develop/infra/scripts/bootstrap-vps.sh -o bootstrap.sh
 #   less bootstrap.sh            # read it before running it
 #   sudo bash bootstrap.sh "ssh-ed25519 AAAA... github-actions-deploy"
 #
@@ -49,7 +49,6 @@ touch /home/$DEPLOY_USER/.ssh/authorized_keys
 grep -qxF "$DEPLOY_KEY" /home/$DEPLOY_USER/.ssh/authorized_keys || echo "$DEPLOY_KEY" >> /home/$DEPLOY_USER/.ssh/authorized_keys
 chown "$DEPLOY_USER:$DEPLOY_USER" /home/$DEPLOY_USER/.ssh/authorized_keys
 chmod 600 /home/$DEPLOY_USER/.ssh/authorized_keys
-passwd -l "$DEPLOY_USER" >/dev/null
 
 echo "==> Firewall: only SSH in. Web traffic arrives through the Cloudflare tunnel (outbound)."
 ufw default deny incoming

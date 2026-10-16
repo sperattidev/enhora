@@ -1,5 +1,6 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { AdminModule } from './admin/admin.module.js';
+import { AuditModule } from './audit/audit.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { CouriersModule } from './couriers/couriers.module.js';
@@ -18,6 +19,7 @@ export class AppModule {
       imports: [
         ConfigModule.forRoot(env),
         DbModule,
+        AuditModule,
         AuthModule,
         AdminModule,
         ZonesModule,

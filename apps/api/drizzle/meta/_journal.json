@@ -50,6 +50,13 @@
       "when": 1792111633012,
       "tag": "0006_dispatch",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792118166338,
+      "tag": "0007_admin_audit",
+      "breakpoints": true
     }
   ]
 }

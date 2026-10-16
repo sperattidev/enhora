@@ -15,6 +15,20 @@
       "when": 1792107834726,
       "tag": "0001_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792108431657,
+      "tag": "0002_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792108433799,
+      "tag": "0003_seed_firmat",
+      "breakpoints": true
     }
   ]
 }

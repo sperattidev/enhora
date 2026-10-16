@@ -15,6 +15,9 @@ const envSchema = z.object({
         .filter(Boolean),
     )
     .pipe(z.array(z.url())),
+  JWT_ACCESS_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;

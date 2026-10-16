@@ -6,6 +6,7 @@ export function RequireMerchant() {
   const { state, logout } = useAuth();
   if (state.status === 'loading') return <FullPageSpinner />;
   if (state.status === 'anonymous') return <Navigate to="/ingresar" replace />;
+  if (state.account.role === 'ADMIN') return <Navigate to="/panel" replace />;
   if (state.account.role !== 'MERCHANT' || !state.account.merchant) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 p-4">
@@ -72,6 +73,7 @@ function MerchantLayout() {
 export function PublicOnly() {
   const { state } = useAuth();
   if (state.status === 'loading') return <FullPageSpinner />;
+  if (state.status === 'authenticated' && state.account.role === 'ADMIN') return <Navigate to="/panel" replace />;
   if (state.status === 'authenticated' && state.account.role === 'MERCHANT') return <Navigate to="/envios" replace />;
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">

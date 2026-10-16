@@ -62,6 +62,9 @@ ADMIN_EMAIL=vos@enhora.net.ar ADMIN_PASSWORD='una-clave-larga' pnpm --filter @en
 | GET            | `/t/:token`                                 | público         | Seguimiento para el cliente: estado, comercio y nombre del cadete; vence 24 h después del cierre         |
 | POST/PATCH/GET | `/admin/zones`, `/admin/cities/:slug/zones` | admin           | Zonas como polígonos GeoJSON; no se permiten superposiciones                                             |
 | GET/PUT        | `/admin/cities/:slug/pricing`               | admin           | Paradas extra, trámites, recargo, redondeo y espera                                                      |
+| GET            | `/admin/overview`                           | admin           | Envíos por estado, entregas del día, cadetes en línea, efectivo en la calle y aprobaciones pendientes    |
+| GET            | `/admin/jobs?scope=`                        | admin           | Envíos de todos los comercios (`active` o `all`), con comercio, cadete y destino                         |
+| GET            | `/admin/audit?before=&limit=`               | admin           | Registro inalterable de cada cambio hecho por un administrador                                           |
 
 ## API del cadete
 

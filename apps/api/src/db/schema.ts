@@ -297,3 +297,24 @@ export const offers = pgTable(
     index('offers_courier_idx').on(t.courierId, t.status),
   ],
 );
+
+/** Append-only record of every change an administrator makes. */
+export const adminAudit = pgTable(
+  'admin_audit',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    adminUserId: uuid('admin_user_id')
+      .notNull()
+      .references(() => users.id),
+    action: text('action').notNull(),
+    targetType: text('target_type').notNull(),
+    targetId: text('target_id').notNull(),
+    details: jsonb('details'),
+    ip: text('ip'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('admin_audit_created_idx').on(t.createdAt),
+    index('admin_audit_target_idx').on(t.targetType, t.targetId),
+  ],
+);

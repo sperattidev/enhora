@@ -24,6 +24,17 @@ export const routes: RouteObject[] = [
       { path: '/envios/:id', lazy: async () => ({ Component: (await import('./pages/JobDetail')).JobDetailPage }) },
     ],
   },
+  {
+    path: '/panel',
+    lazy: async () => ({ Component: (await import('./admin/AdminLayout')).RequireAdmin }),
+    children: [
+      { index: true, lazy: async () => ({ Component: (await import('./admin/Overview')).OverviewPage }) },
+      { path: 'aprobaciones', lazy: async () => ({ Component: (await import('./admin/Approvals')).ApprovalsPage }) },
+      { path: 'zonas', lazy: async () => ({ Component: (await import('./admin/Zones')).ZonesPage }) },
+      { path: 'tarifas', lazy: async () => ({ Component: (await import('./admin/Pricing')).PricingPage }) },
+      { path: 'auditoria', lazy: async () => ({ Component: (await import('./admin/Audit')).AuditPage }) },
+    ],
+  },
   { path: '*', element: <NotFound /> },
 ];
 

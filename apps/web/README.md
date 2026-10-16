@@ -2,13 +2,14 @@
 
 App web de los comercios (PWA instalable) y página pública de seguimiento.
 
-| Ruta                     | Quién           | Qué hace                                                                    |
-| ------------------------ | --------------- | --------------------------------------------------------------------------- |
-| `/ingresar`, `/registro` | público         | Ingreso y alta del comercio (con su ubicación en el mapa)                   |
-| `/envios`                | comercio        | Envíos en curso y anteriores, con avance de las paradas                     |
-| `/envios/nuevo`          | comercio activo | Pedir cadete: paradas, mapa, cobro, programación y precio en vivo           |
-| `/envios/:id`            | comercio        | Detalle, códigos de entrega, aviso por WhatsApp, cancelar o relanzar        |
-| `/seguimiento/:token`    | cliente final   | Estado del envío sin datos personales; es el link que se manda por WhatsApp |
+| Ruta                     | Quién           | Qué hace                                                                                                  |
+| ------------------------ | --------------- | --------------------------------------------------------------------------------------------------------- |
+| `/ingresar`, `/registro` | público         | Ingreso y alta del comercio (con su ubicación en el mapa)                                                 |
+| `/envios`                | comercio        | Envíos en curso y anteriores, con avance de las paradas                                                   |
+| `/envios/nuevo`          | comercio activo | Pedir cadete: paradas, mapa, cobro, programación y precio en vivo                                         |
+| `/envios/:id`            | comercio        | Detalle, códigos de entrega, aviso por WhatsApp, cancelar o relanzar                                      |
+| `/seguimiento/:token`    | cliente final   | Estado del envío sin datos personales; es el link que se manda por WhatsApp                               |
+| `/panel`                 | admin           | Operaciones en vivo, aprobaciones de cadetes y comercios, zonas dibujadas en el mapa, tarifas y auditoría |
 
 ## Desarrollo
 
@@ -17,7 +18,7 @@ pnpm --filter @enhora/web dev        # contra la API local en :3000 (proxy, mism
 pnpm --filter @enhora/web dev:mock   # sin backend: API simulada en memoria para revisar diseño
 ```
 
-En `dev:mock` cualquier email y contraseña ingresan como un comercio activo con envíos de ejemplo.
+En `dev:mock` cualquier email y contraseña ingresan como un comercio activo con envíos de ejemplo; si el email contiene "admin", se ingresa al panel de administración.
 Ese modo no forma parte del build de producción.
 
 ## Decisiones

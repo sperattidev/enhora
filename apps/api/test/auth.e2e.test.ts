@@ -49,7 +49,11 @@ describe('auth (e2e)', () => {
 
     const { token } = await login(merchantEmail);
     const me = await request({ method: 'GET', url: '/auth/me', token });
-    expect(me.json()).toMatchObject({ role: 'MERCHANT', merchant: { status: 'PENDING' }, courier: null });
+    expect(me.json()).toMatchObject({
+      role: 'MERCHANT',
+      merchant: { status: 'PENDING', address: 'Belgrano 1200' },
+      courier: null,
+    });
   });
 
   it('rejects a duplicate email with 409', async () => {

@@ -1,17 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
-// MapLibre locates its worker relative to its own file, which breaks once Vite bundles it:
-// let Vite bundle the worker and hand MapLibre the resulting URL.
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { FIRMAT_CENTER, loadMapLibre, MAP_STYLE_URL, type LatLng } from './maplibre';
 
-export interface LatLng {
-  lat: number;
-  lng: number;
-}
-
-/** Free vector tiles, no API key; attribution is shown by the map itself. */
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
-export const FIRMAT_CENTER: LatLng = { lat: -33.4594, lng: -61.4832 };
+export { FIRMAT_CENTER, loadMapLibre, MAP_STYLE_URL, type LatLng };
 
 interface MapPickerProps {
   value: LatLng | null;
@@ -37,13 +28,12 @@ export function MapPicker({ value, onChange, center = FIRMAT_CENTER, label }: Ma
     let cancelled = false;
     void (async () => {
       try {
-        const [maplibre] = await Promise.all([import('maplibre-gl'), import('maplibre-gl/dist/maplibre-gl.css')]);
+        const maplibre = await loadMapLibre();
         if (cancelled || !container.current) return;
-        maplibre.setWorkerUrl(workerUrl);
         const start = value ?? center;
         const m = new maplibre.Map({
           container: container.current,
-          style: STYLE_URL,
+          style: MAP_STYLE_URL,
           center: [start.lng, start.lat],
           zoom: value ? 16 : 14,
           attributionControl: { compact: true },

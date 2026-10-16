@@ -20,6 +20,8 @@ export interface TransitionRequest {
   jobId: string;
   /** When set, the job must belong to this merchant (otherwise 404, never 403: do not leak existence). */
   merchantId?: string;
+  /** When set, the job must be assigned to this courier (otherwise 404). */
+  courierId?: string;
   to: JobStatus;
   actor: Actor;
   actorUserId: string | null;
@@ -32,9 +34,11 @@ export interface TransitionRequest {
  * appends the audit event, all inside the caller's transaction.
  */
 export async function transitionJob(tx: Tx, req: TransitionRequest): Promise<JobStatus> {
-  const scope = req.merchantId
-    ? and(eq(jobs.id, req.jobId), eq(jobs.merchantId, req.merchantId))
-    : eq(jobs.id, req.jobId);
+  const scope = and(
+    eq(jobs.id, req.jobId),
+    req.merchantId ? eq(jobs.merchantId, req.merchantId) : undefined,
+    req.courierId ? eq(jobs.courierId, req.courierId) : undefined,
+  );
   const [job] = await tx.select({ status: jobs.status }).from(jobs).where(scope).for('update');
   if (!job) throw new NotFoundException('Envío inexistente');
 

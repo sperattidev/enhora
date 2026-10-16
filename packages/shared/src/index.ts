@@ -1,3 +1,4 @@
+import './locale.js';
 export * from './job/status.js';
 export * from './job/stop.js';
 export * from './job/schemas.js';

@@ -51,25 +51,25 @@ Un **Envío** (`Job`) es una secuencia ordenada de **Paradas** (`Stop`). Con eso
           seguimiento /t/:code                   │
                                     ┌────────────┼─────────────┐
                                PostgreSQL     Redis          Cloudflare R2
-                               + PostGIS   (colas BullMQ,   (documentos KYC,
+                               + PostGIS   (avisos en vivo,  (documentos KYC,
                                            posiciones,       fotos de entrega,
                                            rate limit)       backups)
 ```
 
-| Pieza               | Tecnología                                                             | Por qué                                                                               |
-| ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Lenguaje            | TypeScript en todo                                                     | Un solo lenguaje, tipos compartidos entre API y apps.                                 |
-| Monorepo            | pnpm workspaces + Turborepo                                            | Builds incrementales, un solo CI.                                                     |
-| API                 | NestJS 12 sobre Fastify                                                | Módulos claros, inyección de dependencias, rendimiento.                               |
-| Base de datos       | PostgreSQL 17 + PostGIS                                                | Zonas como polígonos, cadetes cercanos con índices espaciales.                        |
-| ORM                 | Drizzle                                                                | SQL explícito, soporte real de tipos PostGIS, migraciones versionadas.                |
-| Colas y tiempo real | Redis + BullMQ + WebSockets                                            | Ofertas con timeout, notificaciones, posiciones en vivo.                              |
-| Validación          | Zod (en `packages/shared`)                                             | El mismo esquema valida en el navegador y en la API.                                  |
-| Frontends           | React + Vite, PWA                                                      | Instalables sin tiendas; el cadete puede pasar a Capacitor para GPS en segundo plano. |
-| Mapas               | MapLibre + OpenStreetMap; Google Places para autocompletar direcciones | Costo bajo, buena calidad de direcciones.                                             |
-| Pagos               | Mercado Pago (suscripciones)                                           | Lo que usa todo el mundo en Argentina.                                                |
-| Infra               | Docker Compose, Caddy, Cloudflare Tunnel                               | Sin puertos expuestos, TLS automático.                                                |
-| Observabilidad      | Logs estructurados (pino), Sentry, Uptime Kuma                         | Saber qué falló antes que el cliente.                                                 |
+| Pieza                    | Tecnología                                                                                                  | Por qué                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Lenguaje                 | TypeScript en todo                                                                                          | Un solo lenguaje, tipos compartidos entre API y apps.                                         |
+| Monorepo                 | pnpm workspaces + Turborepo                                                                                 | Builds incrementales, un solo CI.                                                             |
+| API                      | NestJS 12 sobre Fastify                                                                                     | Módulos claros, inyección de dependencias, rendimiento.                                       |
+| Base de datos            | PostgreSQL 17 + PostGIS                                                                                     | Zonas como polígonos, cadetes cercanos con índices espaciales.                                |
+| ORM                      | Drizzle                                                                                                     | SQL explícito, soporte real de tipos PostGIS, migraciones versionadas.                        |
+| Asignación y tiempo real | Despachador sobre PostgreSQL (`SKIP LOCKED`); Redis + WebSockets para avisos y posiciones en vivo (próximo) | Sin infraestructura extra mientras haya una sola API; escala a varias instancias sin cambios. |
+| Validación               | Zod (en `packages/shared`)                                                                                  | El mismo esquema valida en el navegador y en la API.                                          |
+| Frontends                | React + Vite, PWA                                                                                           | Instalables sin tiendas; el cadete puede pasar a Capacitor para GPS en segundo plano.         |
+| Mapas                    | MapLibre + OpenStreetMap; Google Places para autocompletar direcciones                                      | Costo bajo, buena calidad de direcciones.                                                     |
+| Pagos                    | Mercado Pago (suscripciones)                                                                                | Lo que usa todo el mundo en Argentina.                                                        |
+| Infra                    | Docker Compose, Caddy, Cloudflare Tunnel                                                                    | Sin puertos expuestos, TLS automático.                                                        |
+| Observabilidad           | Logs estructurados (pino), Sentry, Uptime Kuma                                                              | Saber qué falló antes que el cliente.                                                         |
 
 ## 5. Estructura del repositorio
 
@@ -118,7 +118,7 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 1. ✅ **Fundaciones:** monorepo, CI, dominio, esqueleto de API, base de datos.
 2. ✅ **Identidad:** registro, login, sesiones rotativas, roles, aprobación de comercios y cadetes. Falta: carga de documentos KYC a R2 y 2FA de admin.
 3. ✅ **Envíos:** zonas y tarifas por ciudad, cotización, creación idempotente, cancelación y relanzamiento con auditoría, seguimiento público. Falta: avance de paradas por el cadete (llega con la asignación).
-4. **Asignación:** ofertas en tiempo real con BullMQ + WebSocket.
+4. ✅ **Asignación:** despachador con ofertas secuenciales, vencimientos, programados, liberación y cierre con código. Falta: aviso en tiempo real por WebSocket (hoy la app del cadete consulta cada pocos segundos).
 5. **Apps:** PWA comercio, PWA cadete, seguimiento público.
 6. **Dinero:** abonos Mercado Pago, liquidación semanal de cadetes, rendición de efectivo.
 7. **Producción:** despliegue en VPS, backups, monitoreo.

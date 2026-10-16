@@ -1,4 +1,4 @@
-import { ACTORS, JOB_STATUSES, STOP_FAILURE_REASONS, STOP_KINDS, STOP_STATUSES } from '@enhora/shared';
+import { ACTORS, JOB_STATUSES, ROLES, STOP_FAILURE_REASONS, STOP_KINDS, STOP_STATUSES, VEHICLES } from '@enhora/shared';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -26,12 +26,12 @@ const updatedAt = () =>
     .defaultNow()
     .$onUpdate(() => new Date());
 
-export const userRole = pgEnum('user_role', ['ADMIN', 'MERCHANT', 'COURIER']);
+export const userRole = pgEnum('user_role', ROLES);
 export const userStatus = pgEnum('user_status', ['ACTIVE', 'SUSPENDED']);
 export const merchantStatus = pgEnum('merchant_status', ['PENDING', 'ACTIVE', 'SUSPENDED']);
 export const merchantMemberRole = pgEnum('merchant_member_role', ['OWNER', 'STAFF']);
 export const kycStatus = pgEnum('kyc_status', ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']);
-export const vehicleType = pgEnum('vehicle_type', ['MOTORCYCLE', 'BICYCLE', 'CAR', 'ON_FOOT']);
+export const vehicleType = pgEnum('vehicle_type', VEHICLES);
 export const jobStatus = pgEnum('job_status', JOB_STATUSES);
 export const stopKind = pgEnum('stop_kind', STOP_KINDS);
 export const stopStatus = pgEnum('stop_status', STOP_STATUSES);
@@ -79,6 +79,29 @@ export const users = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [uniqueIndex('users_email_lower_uq').on(sql`lower(${t.email})`)],
+);
+
+/**
+ * One row per issued refresh token. Rotation revokes the row and issues a new one in the same family;
+ * presenting a revoked token again means it was stolen, so the whole family is revoked.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    familyId: uuid('family_id').notNull(),
+    /** SHA-256 of the refresh token; the token itself is never stored. */
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    ip: text('ip'),
+    userAgent: text('user_agent'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('sessions_family_idx').on(t.familyId), index('sessions_user_idx').on(t.userId)],
 );
 
 export const merchants = pgTable(

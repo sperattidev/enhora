@@ -1,94 +1,32 @@
 import { randomUUID } from 'node:crypto';
-import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import type postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../src/app.js';
 import { REFRESH_COOKIE } from '../src/auth/auth.controller.js';
-import { hashPassword } from '../src/auth/password.js';
-import { loadEnv } from '../src/config/env.js';
 import { couriers, users } from '../src/db/schema.js';
+import { createTestContext, ORIGIN, PASSWORD, randomCuit, refreshCookie, type TestContext } from './helpers.js';
 
-const ORIGIN = 'https://app.enhora.test';
-const env = loadEnv({
-  ...process.env,
-  NODE_ENV: 'test',
-  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET ?? 'e2e-secret-e2e-secret-e2e-secret-e2e',
-  CORS_ORIGINS: ORIGIN,
-});
-
-let app: NestFastifyApplication;
+let ctx: TestContext;
 let sql: postgres.Sql;
-let ipCounter = 0;
 const run = randomUUID().slice(0, 8);
-
-/** Every request comes from a different IP so the 5/min limit only applies where a test wants it. */
-function request(opts: {
-  method: 'GET' | 'POST' | 'PATCH';
-  url: string;
-  body?: unknown;
-  token?: string;
-  cookie?: string;
-  origin?: string;
-  ip?: string;
-}) {
-  return app.inject({
-    method: opts.method,
-    url: opts.url,
-    payload: opts.body as object | undefined,
-    headers: {
-      'x-forwarded-for': opts.ip ?? `10.0.${Math.floor(++ipCounter / 250)}.${ipCounter % 250}`,
-      ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
-      ...(opts.cookie ? { cookie: `${REFRESH_COOKIE}=${opts.cookie}` } : {}),
-      ...(opts.origin ? { origin: opts.origin } : {}),
-    },
-  });
-}
-
-function refreshCookie(res: { cookies: { name: string; value: string }[] }): string {
-  const cookie = res.cookies.find((c) => c.name === REFRESH_COOKIE);
-  if (!cookie) throw new Error('refresh cookie missing');
-  return cookie.value;
-}
-
-const password = 'clave-de-prueba-123';
+const password = PASSWORD;
 const merchantEmail = `comercio-${run}@e2e.test`;
 const courierEmail = `cadete-${run}@e2e.test`;
 const adminEmail = `admin-${run}@e2e.test`;
 
-/** Builds a valid CUIT from a random 8-digit DNI so each run is unique. */
-function randomCuit(): string {
-  const weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
-  for (;;) {
-    const base = `20${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
-    const sum = weights.reduce((acc, w, i) => acc + w * Number(base[i]), 0);
-    const mod = 11 - (sum % 11);
-    if (mod === 10) continue;
-    return `${base}${mod === 11 ? 0 : mod}`;
-  }
-}
+const request: TestContext['request'] = (opts) => ctx.request(opts);
+const login: TestContext['login'] = (email) => ctx.login(email);
 
 beforeAll(async () => {
-  app = await createApp(env, { logger: false });
-  await app.init();
-  await app.getHttpAdapter().getInstance().ready();
-  sql = postgres(env.DATABASE_URL, { max: 1 });
-  await drizzle(sql)
-    .insert(users)
-    .values({ email: adminEmail, passwordHash: await hashPassword(password), role: 'ADMIN' });
+  ctx = await createTestContext();
+  sql = ctx.sql;
+  await ctx.createAdmin(adminEmail);
 });
 
 afterAll(async () => {
-  await sql?.end();
-  await app?.close();
+  await ctx?.close();
 });
-
-async function login(email: string) {
-  const res = await request({ method: 'POST', url: '/auth/login', body: { email, password } });
-  expect(res.statusCode).toBe(200);
-  return { token: res.json<{ accessToken: string }>().accessToken, cookie: refreshCookie(res) };
-}
 
 describe('auth (e2e)', () => {
   it('registers a merchant and shows it as pending', async () => {

@@ -49,6 +49,20 @@ export const cities = pgTable('cities', {
   createdAt: createdAt(),
 });
 
+/** Pricing knobs per city. Zone fees live on each zone; everything else is here. */
+export const pricingRules = pgTable('pricing_rules', {
+  cityId: uuid('city_id')
+    .primaryKey()
+    .references(() => cities.id),
+  extraStopFeeCents: cents('extra_stop_fee_cents').notNull(),
+  errandFeeCents: cents('errand_fee_cents').notNull(),
+  surchargeBps: integer('surcharge_bps').notNull().default(0),
+  roundToCents: integer('round_to_cents').notNull().default(0),
+  freeWaitMinutes: integer('free_wait_minutes').notNull(),
+  waitFeePerMinuteCents: cents('wait_fee_per_minute_cents').notNull(),
+  updatedAt: updatedAt(),
+});
+
 export const zones = pgTable(
   'zones',
   {
@@ -191,6 +205,9 @@ export const jobs = pgTable(
     notes: text('notes'),
     /** Random, unguessable token for the public tracking page. */
     trackingToken: text('tracking_token').notNull().unique(),
+    /** Client-supplied key so a double tap or a retried request never creates two jobs. */
+    idempotencyKey: text('idempotency_key'),
+    cancelReason: text('cancel_reason'),
     completedAt: timestamp('completed_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     createdAt: createdAt(),
@@ -200,6 +217,9 @@ export const jobs = pgTable(
     index('jobs_merchant_created_idx').on(t.merchantId, t.createdAt),
     index('jobs_courier_status_idx').on(t.courierId, t.status),
     index('jobs_city_status_idx').on(t.cityId, t.status),
+    uniqueIndex('jobs_merchant_idempotency_uq')
+      .on(t.merchantId, t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} is not null`),
   ],
 );
 

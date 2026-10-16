@@ -29,6 +29,20 @@
       "when": 1792108433799,
       "tag": "0003_seed_firmat",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792110558912,
+      "tag": "0004_jobs_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792110560589,
+      "tag": "0005_seed_firmat_pricing",
+      "breakpoints": true
     }
   ]
 }

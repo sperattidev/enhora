@@ -101,3 +101,45 @@ jobs:
       - run: pnpm --filter @enhora/shared build
       - run: pnpm --filter @enhora/api db:migrate
       - run: pnpm --filter @enhora/api test:e2e
+
+  docker:
+    name: Imágenes Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - name: Imagen de la API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/api.Dockerfile
+          tags: enhora-api:ci
+          load: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Imagen web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/web.Dockerfile
+          tags: enhora-web:ci
+          load: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: La API arranca y las migraciones corren desde la imagen
+        run: |
+          docker network create ci
+          docker run -d --name pg --network ci -e POSTGRES_USER=enhora -e POSTGRES_PASSWORD=enhora -e POSTGRES_DB=enhora postgis/postgis:17-3.5-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U enhora -d enhora && break; sleep 2; done
+          DB=postgres://enhora:enhora@pg:5432/enhora
+          # The PostGIS image restarts once during its first init: retry until it is really up.
+          for i in $(seq 1 10); do docker run --rm --network ci -e DATABASE_URL=$DB enhora-api:ci node dist/scripts/migrate.js && break; sleep 3; done
+          docker run -d --name api --network ci -e DATABASE_URL=$DB -e JWT_ACCESS_SECRET=ci-only-secret-ci-only-secret-ci-only -e CORS_ORIGINS=https://app.example.com enhora-api:ci
+          for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy ] && break; sleep 2; done
+          docker exec api wget -qO- http://127.0.0.1:3000/health/ready || (docker logs api; exit 1)
+      - name: El Caddyfile es válido
+        run: |
+          docker run --rm -e APP_HOST=app.example.com -e RIDER_HOST=cadete.example.com \
+            -e API_HOST=api.example.com -e APEX_HOST=example.com \
+            enhora-web:ci caddy validate --config /etc/caddy/Caddyfile

@@ -1,0 +1,76 @@
+# EnHora edge. Cloudflare terminates TLS and reaches this server through the tunnel over plain
+# HTTP, so Caddy only listens on :80 inside the Docker network and never manages certificates.
+# Host names come from the environment (APP_HOST, RIDER_HOST, API_HOST, APEX_HOST).
+{
+	auto_https off
+	admin off
+	servers {
+		# cloudflared runs next to us on a private Docker network; trust it and read the real
+		# visitor IP from the header Cloudflare sets (clients cannot forge it past Cloudflare).
+		trusted_proxies static private_ranges
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
+(security) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+}
+
+(spa) {
+	encode zstd gzip
+	# Hashed build files never change; the shell and the service worker must always revalidate.
+	@immutable path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@revalidate path / /index.html /sw.js /registerSW.js /manifest.webmanifest
+	header @revalidate Cache-Control "no-cache"
+	try_files {path} /index.html
+	file_server
+}
+
+http://{$APP_HOST} {
+	import security
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://tiles.openfreemap.org; connect-src 'self' https://{$API_HOST} https://tiles.openfreemap.org; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Permissions-Policy "camera=(), microphone=(), payment=(), geolocation=(self)"
+	}
+	root * /srv/web
+	import spa
+}
+
+http://{$RIDER_HOST} {
+	import security
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://{$API_HOST}; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Permissions-Policy "camera=(), microphone=(), payment=(), geolocation=(self)"
+	}
+	root * /srv/rider
+	import spa
+}
+
+http://{$API_HOST} {
+	encode zstd gzip
+	request_body {
+		max_size 1MB
+	}
+	reverse_proxy api:3000 {
+		# The API trusts X-Forwarded-For for rate limiting: always replace it with the real IP.
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
+http://{$APEX_HOST}, http://www.{$APEX_HOST} {
+	redir https://{$APP_HOST}{uri} permanent
+}
+
+# Anything else (unknown host, direct hits): nothing to see.
+:80 {
+	respond /healthz "ok" 200
+	respond 404
+}

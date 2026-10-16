@@ -71,3 +71,33 @@ jobs:
             git status --porcelain apps/api/drizzle
             exit 1
           fi
+
+  e2e:
+    name: E2E de la API contra PostGIS
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5-alpine
+        env:
+          POSTGRES_USER: enhora
+          POSTGRES_PASSWORD: enhora
+          POSTGRES_DB: enhora
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U enhora -d enhora"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://enhora:enhora@localhost:5432/enhora
+      JWT_ACCESS_SECRET: ci-only-secret-ci-only-secret-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @enhora/shared build
+      - run: pnpm --filter @enhora/api db:migrate
+      - run: pnpm --filter @enhora/api test:e2e

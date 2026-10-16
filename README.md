@@ -27,6 +27,25 @@ pnpm dev
 
 La API queda en `http://localhost:3000` (`GET /health`).
 
+Para crear el primer administrador (las credenciales van por variables de entorno, nunca como argumentos):
+
+```bash
+pnpm --filter @enhora/api build
+ADMIN_EMAIL=vos@enhora.net.ar ADMIN_PASSWORD='una-clave-larga' pnpm --filter @enhora/api admin:create
+```
+
+## API de identidad
+
+| Método    | Ruta                                                               | Acceso  | Qué hace                                                          |
+| --------- | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------- |
+| POST      | `/auth/register/merchant`                                          | público | Alta de comercio (queda `PENDING` hasta aprobación)               |
+| POST      | `/auth/register/courier`                                           | público | Alta de cadete (KYC `PENDING` hasta aprobación)                   |
+| POST      | `/auth/login`                                                      | público | Devuelve access token; el refresh va en cookie `HttpOnly`         |
+| POST      | `/auth/refresh`                                                    | cookie  | Rota el refresh token; reusar uno viejo cierra todas las sesiones |
+| POST      | `/auth/logout`                                                     | cookie  | Cierra la sesión del dispositivo                                  |
+| GET       | `/auth/me`                                                         | token   | Cuenta, comercio o cadete asociado y su estado                    |
+| GET/PATCH | `/admin/couriers…`, `/admin/merchants…`, `/admin/users/:id/status` | admin   | Aprobar, rechazar o suspender                                     |
+
 ## Contribuir
 
 Ver [CONTRIBUTING.md](CONTRIBUTING.md): ramas, commits y pull requests.

@@ -91,7 +91,7 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 
 - **Identidad de cadetes (KYC):** DNI frente/dorso, selfie, licencia, seguro, constancia de monotributo. Aprobación manual del admin. Documentos en R2 privado con URLs firmadas de corta duración.
 - **Comercios:** CUIT validado, responsable identificado.
-- **Autenticación:** contraseña con Argon2id; access token corto (15 min) + refresh token rotativo en cookie `HttpOnly; Secure; SameSite=Strict`; detección de reuso de refresh token. 2FA obligatorio para administradores.
+- **Autenticación:** contraseña con Argon2id; access token corto (15 min) + refresh token rotativo en cookie `HttpOnly; Secure; SameSite=Strict`; detección de reuso de refresh token; el mismo mensaje de error para email inexistente y contraseña incorrecta, con tiempo de respuesta constante. Rate limit de 5 intentos por minuto por IP en login y registro. Suspender a un usuario revoca todas sus sesiones al instante; el access token vigente expira solo en ≤ 15 min. 2FA obligatorio para administradores (pendiente).
 - **Autorización:** roles (`ADMIN`, `MERCHANT_OWNER`, `MERCHANT_STAFF`, `COURIER`) + chequeo de pertenencia en cada recurso (un comercio solo ve sus envíos; un cadete solo ve lo que tiene asignado).
 - **Entrada:** toda entrada validada con Zod; límites de tamaño; rate limit por IP y por usuario en Redis.
 - **Prueba de entrega:** código de 4 dígitos que el cliente le dicta al cadete y/o foto.
@@ -115,8 +115,8 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 
 ## 8. Hoja de ruta
 
-1. **Fundaciones** (este PR): monorepo, CI, dominio, esqueleto de API, base de datos.
-2. **Identidad:** registro, login, roles, KYC de cadetes.
+1. ✅ **Fundaciones:** monorepo, CI, dominio, esqueleto de API, base de datos.
+2. ✅ **Identidad:** registro, login, sesiones rotativas, roles, aprobación de comercios y cadetes. Falta: carga de documentos KYC a R2 y 2FA de admin.
 3. **Envíos:** crear, cotizar, máquina de estados, eventos.
 4. **Asignación:** ofertas en tiempo real con BullMQ + WebSocket.
 5. **Apps:** PWA comercio, PWA cadete, seguimiento público.

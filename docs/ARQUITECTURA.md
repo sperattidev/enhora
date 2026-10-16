@@ -121,5 +121,5 @@ La lógica de negocio crítica (estados, precios, puntaje de asignación) vive e
 4. ✅ **Asignación:** despachador con ofertas secuenciales, vencimientos, programados, liberación y cierre con código. Falta: aviso en tiempo real por WebSocket (hoy la app del cadete consulta cada pocos segundos).
 5. ✅ **Apps:** app web del comercio, app del cadete, seguimiento público y panel de administración (operaciones, aprobaciones, zonas dibujadas en el mapa, tarifas y auditoría). Falta: empaquetar la app del cadete con Capacitor para GPS en segundo plano.
 6. **Dinero:** abonos Mercado Pago, liquidación semanal de cadetes, rendición de efectivo.
-7. **Producción:** despliegue en VPS, backups, monitoreo.
+7. ✅ **Producción:** imágenes Docker, Caddy, Cloudflare Tunnel, backups diarios y despliegue automático con aprobación. Ver [DESPLIEGUE.md](DESPLIEGUE.md).
 8. **Piloto** con 5–10 comercios de Firmat.

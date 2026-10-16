@@ -189,8 +189,198 @@ export function mockApi(): Plugin {
     res.end(data === undefined ? undefined : JSON.stringify(data));
   }
 
+  // ---- Admin panel (log in with an email that contains "admin") ----
+  const square = (lng: number, lat: number, half: number) => ({
+    type: 'MultiPolygon',
+    coordinates: [
+      [
+        [
+          [lng - half, lat - half],
+          [lng + half, lat - half],
+          [lng + half, lat + half],
+          [lng - half, lat + half],
+          [lng - half, lat - half],
+        ],
+      ],
+    ],
+  });
+  const zones = [
+    { id: 'z1', name: 'Centro', feeCents: 250_000, active: true, area: square(FIRMAT.lng, FIRMAT.lat, 0.012) },
+    { id: 'z2', name: 'Este', feeCents: 350_000, active: true, area: square(FIRMAT.lng + 0.03, FIRMAT.lat, 0.012) },
+  ];
+  let pricing = {
+    extraStopFeeCents: 150_000,
+    errandFeeCents: 200_000,
+    surchargeBps: 0,
+    roundToCents: 5_000,
+    freeWaitMinutes: 5,
+    waitFeePerMinuteCents: 10_000,
+  };
+  const pendingCouriers = [
+    {
+      id: 'c1',
+      userId: 'u10',
+      fullName: 'Martín Acosta',
+      dni: '38123456',
+      vehicle: 'MOTORCYCLE',
+      kycStatus: 'PENDING',
+      email: 'martin@example.com',
+      phone: '+5493465555111',
+      createdAt: iso(-300),
+    },
+    {
+      id: 'c2',
+      userId: 'u11',
+      fullName: 'Sofía Ríos',
+      dni: '40987654',
+      vehicle: 'BICYCLE',
+      kycStatus: 'PENDING',
+      email: 'sofia@example.com',
+      phone: '+5493465555222',
+      createdAt: iso(-90),
+    },
+  ];
+  const adminMerchants = [
+    {
+      id: 'm2',
+      legalName: 'Farmacia Central SRL',
+      displayName: 'Farmacia Central',
+      cuit: '30712345671',
+      phone: '+5493465444111',
+      address: 'Bv. Solís 1020',
+      status: 'PENDING',
+      createdAt: iso(-120),
+    },
+    {
+      id: 'm1',
+      legalName: 'La Esquina SRL',
+      displayName: merchant.displayName,
+      cuit: '20123456786',
+      phone: '+5493465111111',
+      address: merchant.address,
+      status: 'ACTIVE',
+      createdAt: iso(-5000),
+    },
+  ];
+  const audit: Record<string, unknown>[] = [];
+  const record = (action: string, targetType: string, targetId: string, details: Record<string, unknown>) =>
+    audit.unshift({
+      id: audit.length + 1,
+      action,
+      targetType,
+      targetId,
+      details,
+      adminEmail: 'admin@enhora.net.ar',
+      createdAt: new Date().toISOString(),
+    });
+
+  async function adminRoutes(path: string, method: string, req: IncomingMessage, res: ServerResponse) {
+    const count = (s: string) => jobs.filter((j) => j.status === s).length;
+    if (path === '/admin/overview') {
+      return send(res, 200, {
+        scheduled: count('SCHEDULED'),
+        searching: count('SEARCHING'),
+        assigned: count('ASSIGNED'),
+        inProgress: count('IN_PROGRESS'),
+        expired: count('EXPIRED'),
+        completedToday: count('COMPLETED'),
+        cancelledToday: count('CANCELLED'),
+        deliveredValueToday: jobs
+          .filter((j) => j.status === 'COMPLETED')
+          .reduce((s, j) => s + (j.priceCents as number), 0),
+        couriersOnline: 3,
+        couriersApproved: 7,
+        cashInHands: 4_250_000,
+        pendingCouriers: pendingCouriers.filter((c) => c.kycStatus === 'PENDING').length,
+        pendingMerchants: adminMerchants.filter((m) => m.status === 'PENDING').length,
+        activeMerchants: adminMerchants.filter((m) => m.status === 'ACTIVE').length,
+      });
+    }
+    if (path === '/admin/jobs') {
+      return send(
+        res,
+        200,
+        jobs
+          .filter((j) => !['COMPLETED', 'CANCELLED'].includes(j.status))
+          .map((j) => ({
+            ...summary(j),
+            merchantName: merchant.displayName,
+            courierName: j.courierName,
+            searchingSince: j.status === 'SEARCHING' ? iso(-4) : null,
+          })),
+      );
+    }
+    if (path === '/admin/audit') return send(res, 200, audit);
+    if (path === '/admin/couriers') {
+      const status = new URL(req.url ?? '', 'http://x').searchParams.get('kycStatus') ?? 'PENDING';
+      return send(
+        res,
+        200,
+        pendingCouriers.filter((c) => c.kycStatus === status),
+      );
+    }
+    const courierKyc = path.match(/^\/admin\/couriers\/(\w+)\/kyc$/);
+    if (courierKyc) {
+      const body2 = await body(req);
+      const c = pendingCouriers.find((x) => x.id === courierKyc[1]);
+      if (!c) return send(res, 404, { message: 'No encontrado' });
+      c.kycStatus = String(body2.kycStatus);
+      record('courier.kyc', 'courier', c.id, body2);
+      return send(res, 204);
+    }
+    if (path === '/admin/merchants') {
+      const status = new URL(req.url ?? '', 'http://x').searchParams.get('status') ?? 'PENDING';
+      return send(
+        res,
+        200,
+        adminMerchants.filter((m) => m.status === status),
+      );
+    }
+    const merchantStatus = path.match(/^\/admin\/merchants\/(\w+)\/status$/);
+    if (merchantStatus) {
+      const body2 = await body(req);
+      const m = adminMerchants.find((x) => x.id === merchantStatus[1]);
+      if (!m) return send(res, 404, { message: 'No encontrado' });
+      m.status = String(body2.status);
+      record('merchant.status', 'merchant', m.id, body2);
+      return send(res, 204);
+    }
+    if (path === '/admin/cities/firmat/zones') return send(res, 200, zones);
+    if (path === '/admin/zones' && method === 'POST') {
+      const input = await body(req);
+      const area = input.area as { coordinates: number[][][] };
+      const zone = {
+        id: `z${zones.length + 1}`,
+        name: String(input.name),
+        feeCents: Number(input.feeCents),
+        active: true,
+        area: { type: 'MultiPolygon', coordinates: [area.coordinates] },
+      };
+      zones.push(zone);
+      record('zone.create', 'zone', zone.id, { name: zone.name, feeCents: zone.feeCents });
+      return send(res, 201, { id: zone.id });
+    }
+    const zonePatch = path.match(/^\/admin\/zones\/(\w+)$/);
+    if (zonePatch) {
+      const input = await body(req);
+      const zone = zones.find((z) => z.id === zonePatch[1]);
+      if (!zone) return send(res, 404, { message: 'Zona inexistente' });
+      Object.assign(zone, input);
+      record('zone.update', 'zone', zone.id, input);
+      return send(res, 204);
+    }
+    if (path === '/admin/cities/firmat/pricing' && method === 'GET') return send(res, 200, pricing);
+    if (path === '/admin/cities/firmat/pricing' && method === 'PUT') {
+      pricing = (await body(req)) as typeof pricing;
+      record('pricing.update', 'city', 'firmat', pricing);
+      return send(res, 204);
+    }
+    return send(res, 404, { message: 'No encontrado' });
+  }
   const loggedIn = (req: IncomingMessage) => /enhora_rt=mock/.test(req.headers.cookie ?? '');
-  const authed = (req: IncomingMessage) => req.headers.authorization === 'Bearer mock-token';
+  const isAdmin = (req: IncomingMessage) =>
+    /enhora_rt=mock-admin/.test(req.headers.cookie ?? '') || req.headers.authorization === 'Bearer mock-admin-token';
+  const authed = (req: IncomingMessage) => /^Bearer mock(-admin)?-token$/.test(req.headers.authorization ?? '');
 
   return {
     name: 'enhora-mock-api',
@@ -202,22 +392,33 @@ export function mockApi(): Plugin {
         await new Promise((r) => setTimeout(r, 250)); // feel a bit like a real network
 
         if (path === '/auth/login' && method === 'POST') {
+          const { email } = await body(req);
+          const admin = String(email).includes('admin');
           return send(
             res,
             200,
-            { accessToken: 'mock-token', expiresIn: 900 },
-            { 'Set-Cookie': 'enhora_rt=mock; Path=/auth; HttpOnly; SameSite=Strict' },
+            { accessToken: admin ? 'mock-admin-token' : 'mock-token', expiresIn: 900 },
+            { 'Set-Cookie': `enhora_rt=${admin ? 'mock-admin' : 'mock'}; Path=/auth; HttpOnly; SameSite=Strict` },
           );
         }
         if (path === '/auth/refresh' && method === 'POST') {
           return loggedIn(req)
-            ? send(res, 200, { accessToken: 'mock-token' })
+            ? send(res, 200, { accessToken: isAdmin(req) ? 'mock-admin-token' : 'mock-token' })
             : send(res, 401, { message: 'Sesión inválida o vencida' });
         }
         if (path === '/auth/logout')
           return send(res, 204, undefined, { 'Set-Cookie': 'enhora_rt=; Path=/auth; Max-Age=0' });
         if (path === '/auth/register/merchant') return send(res, 201, { userId: 'u-new' });
         if (path === '/auth/me') {
+          if (authed(req) && isAdmin(req)) {
+            return send(res, 200, {
+              id: 'u0',
+              email: 'admin@enhora.net.ar',
+              role: 'ADMIN',
+              merchant: null,
+              courier: null,
+            });
+          }
           return authed(req)
             ? send(res, 200, { id: 'u1', email: 'demo@enhora.net.ar', role: 'MERCHANT', merchant, courier: null })
             : send(res, 401, {});
@@ -238,6 +439,10 @@ export function mockApi(): Plugin {
           });
         }
 
+        if (path.startsWith('/admin')) {
+          if (!authed(req) || !isAdmin(req)) return send(res, 403, { message: 'No tenés permiso para esto' });
+          return adminRoutes(path, method, req, res);
+        }
         if (!path.startsWith('/jobs')) return next();
         if (!authed(req)) return send(res, 401, { message: 'Necesitás iniciar sesión' });
 
